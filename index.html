@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EmpreendeSC — Empreendimentos Catarinenses</title>
+
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<header>
+  <div class="logo">
+    <span class="logo-mark">EMPREENDE</span>
+    <span class="logo-sc">SC</span>
+    <span class="logo-tagline">Empreendimentos Catarinenses</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-primary" onclick="openModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Novo Empreendimento
+    </button>
+  </div>
+</header>
+
+<!-- ─── CONTEÚDO PRINCIPAL ─── -->
+<main class="container">
+
+  <!-- Painel de estatísticas -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+      <span class="stat-label">Total</span>
+      <span class="stat-value accent-white" id="statTotal">0</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Ativos</span>
+      <span class="stat-value" id="statAtivos">0</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Inativos</span>
+      <span class="stat-value accent-red" id="statInativos">0</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Segmentos</span>
+      <span class="stat-value accent-yellow" id="statSegmentos">0</span>
+    </div>
+  </div>
+
+  <!-- Barra de ferramentas: busca e filtros -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input
+        type="text"
+        class="search-input"
+        id="searchInput"
+        placeholder="Buscar por nome, município, empreendedor…"
+        oninput="onSearch()"
+      />
+    </div>
+
+    <select class="filter-select" id="filterSegmento" onchange="applyFilters()">
+      <option value="">Todos os segmentos</option>
+      <option value="Tecnologia">Tecnologia</option>
+      <option value="Comércio">Comércio</option>
+      <option value="Indústria">Indústria</option>
+      <option value="Serviços">Serviços</option>
+      <option value="Agronegócio">Agronegócio</option>
+    </select>
+
+    <select class="filter-select" id="filterStatus" onchange="applyFilters()">
+      <option value="">Todos os status</option>
+      <option value="ativo">Ativo</option>
+      <option value="inativo">Inativo</option>
+    </select>
+  </div>
+
+  <!-- Tabela de empreendimentos -->
+  <div class="table-wrap">
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th data-sort="nome"          onclick="sortBy('nome')">Nome do Empreendimento</th>
+          <th data-sort="municipio"     onclick="sortBy('municipio')" class="hide-mobile">Município</th>
+          <th data-sort="segmento"      onclick="sortBy('segmento')">Segmento</th>
+          <th data-sort="status"        onclick="sortBy('status')" class="hide-mobile">Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+    <div class="pagination" id="pagination">
+      <span id="paginationInfo">Mostrando 0 de 0</span>
+      <div class="pagination-btns" id="paginationBtns"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ─── MODAL: Formulário de empreendimento ─── -->
+<div
+  class="modal-overlay"
+  id="modalOverlay"
+  onclick="closeOnBackdrop(event, 'modalOverlay', closeModal)"
+>
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">NOVO EMPREENDIMENTO</span>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal()" aria-label="Fechar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form id="empForm" novalidate>
+        <div class="form-grid">
+
+          <!-- Nome -->
+          <div class="form-group full" id="grp-nome">
+            <label for="f-nome">Nome do Empreendimento *</label>
+            <input type="text" id="f-nome" placeholder="Ex: Tech Valley Ltda" maxlength="120" />
+            <span class="field-error">Campo obrigatório.</span>
+          </div>
+
+          <!-- Empreendedor -->
+          <div class="form-group" id="grp-empreendedor">
+            <label for="f-empreendedor">Empreendedor(a) Responsável *</label>
+            <input type="text" id="f-empreendedor" placeholder="Nome completo" maxlength="100" />
+            <span class="field-error">Campo obrigatório.</span>
+          </div>
+
+          <!-- Município -->
+          <div class="form-group" id="grp-municipio">
+            <label for="f-municipio">Município *</label>
+            <input type="text" id="f-municipio" list="municipios-list"
+              placeholder="Ex: Florianópolis" maxlength="80" />
+            <datalist id="municipios-list">
+              <option value="Florianópolis"></option>
+              <option value="Joinville"></option>
+              <option value="Blumenau"></option>
+              <option value="São José"></option>
+              <option value="Chapecó"></option>
+              <option value="Criciúma"></option>
+              <option value="Itajaí"></option>
+              <option value="Jaraguá do Sul"></option>
+              <option value="Palhoça"></option>
+              <option value="Lages"></option>
+              <option value="Balneário Camboriú"></option>
+              <option value="Brusque"></option>
+              <option value="Tubarão"></option>
+              <option value="São Francisco do Sul"></option>
+              <option value="Caçador"></option>
+              <option value="Concórdia"></option>
+              <option value="Navegantes"></option>
+              <option value="Rio do Sul"></option>
+              <option value="Araranguá"></option>
+              <option value="Mafra"></option>
+            </datalist>
+            <span class="field-error">Campo obrigatório.</span>
+          </div>
+
+          <!-- Segmento -->
+          <div class="form-group" id="grp-segmento">
+            <label for="f-segmento">Segmento *</label>
+            <select id="f-segmento">
+              <option value="">Selecione…</option>
+              <option value="Tecnologia">Tecnologia</option>
+              <option value="Comércio">Comércio</option>
+              <option value="Indústria">Indústria</option>
+              <option value="Serviços">Serviços</option>
+              <option value="Agronegócio">Agronegócio</option>
+            </select>
+            <span class="field-error">Selecione um segmento.</span>
+          </div>
+
+          <!-- Contato -->
+          <div class="form-group full" id="grp-contato">
+            <label for="f-contato">E-mail ou Meio de Contato *</label>
+            <input type="text" id="f-contato"
+              placeholder="email@empresa.com.br ou @instagram" maxlength="150" />
+            <span class="field-error">Campo obrigatório.</span>
+          </div>
+
+          <!-- Status -->
+          <div class="form-group" id="grp-status">
+            <label for="f-status">Status *</label>
+            <select id="f-status">
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
+            </select>
+            <span class="field-error">Campo obrigatório.</span>
+          </div>
+
+          <!-- CNPJ (opcional) -->
+          <div class="form-group" id="grp-cnpj">
+            <label for="f-cnpj">CNPJ <small style="font-weight:300;text-transform:none">(opcional)</small></label>
+            <input type="text" id="f-cnpj" placeholder="00.000.000/0000-00" maxlength="18" />
+          </div>
+
+          <!-- Descrição (opcional) -->
+          <div class="form-group full" id="grp-descricao">
+            <label for="f-descricao">Descrição breve <small style="font-weight:300;text-transform:none">(opcional)</small></label>
+            <input type="text" id="f-descricao"
+              placeholder="Breve descrição da atividade" maxlength="200" />
+          </div>
+
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitForm()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span id="submitLabel">Salvar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: Confirmação de exclusão ─── -->
+<div
+  class="modal-overlay"
+  id="confirmOverlay"
+  onclick="closeOnBackdrop(event, 'confirmOverlay', closeConfirm)"
+>
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title" style="color:var(--sc-red)">REMOVER</span>
+      <button class="btn btn-ghost btn-icon" onclick="closeConfirm()" aria-label="Fechar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="confirm-body">
+      <p>
+        Tem certeza que deseja remover o empreendimento
+        <strong id="confirmName"></strong>?
+        Esta ação não pode ser desfeita.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14H6L5 6"/>
+          <path d="M9 6V4h6v2"/>
+        </svg>
+        Remover
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TOASTS ─── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ─── SCRIPTS (ordem importa) ─── -->
+<script src="js/storage.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
